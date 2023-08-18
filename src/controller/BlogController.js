@@ -126,11 +126,21 @@ exports.getBlogByIdController = async (req, res) => {
 exports.deleteBlogController = async (req, res) => {
   try {
     const blog = await blogModel
-      // .findOneAndDelete(req.params.id)
       .findByIdAndDelete(req.params.id)
       .populate("user");
-    await blog.user.blogs.pull(blog);
-    await blog.user.save();
+
+    if (!blog) {
+      return res.status(404).send({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    if (blog.user) {
+      await blog.user.blogs.pull(blog);
+      await blog.user.save();
+    }
+
     return res.status(200).send({
       success: true,
       message: "Blog Deleted!",
@@ -139,7 +149,7 @@ exports.deleteBlogController = async (req, res) => {
     console.log(error);
     return res.status(400).send({
       success: false,
-      message: "Erorr WHile Deleteing BLog",
+      message: "Error While Deleting Blog",
       error,
     });
   }
